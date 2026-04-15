@@ -27,10 +27,10 @@
 2. `.cursor/skills/lb-shadcn-ui-skill/SKILL.md`
 3. `.cursor/skills/tailwind-v4-shadcn/SKILL.md`
 4. `.cursor/skills/feature-sliced-design/SKILL.md`
-5. `.cursor/skills/nestjs-best-practices/SKILL.md`
+5. `.cursor/skills/nestjs/SKILL.md`
 6. `.cursor/skills/prisma-orm/SKILL.md`
 7. `.cursor/skills/docker-expert/SKILL.md`
-8. `.cursor/skills/postgresql-table-design/SKILL.md`
+8. `.cursor/skills/design-postgres-tables/SKILL.md`
 
 ### Почему этот набор
 - Frontend слой закрывают Next.js + shadcn + Tailwind + архитектурная декомпозиция.
