@@ -1,20 +1,32 @@
-import { IsObject, IsOptional, IsString } from 'class-validator';
+import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+export const scenarioTypes = [
+  'success',
+  'validation_error',
+  'system_error',
+  'slow_request',
+  'teapot',
+] as const;
+
+export type ScenarioType = (typeof scenarioTypes)[number];
 
 export class RunScenarioDto {
   @ApiProperty({
     description: 'Scenario type identifier',
-    example: 'observability_demo',
+    enum: scenarioTypes,
+    example: 'success',
   })
+  @IsIn(scenarioTypes)
   @IsString()
-  type!: string;
+  type!: ScenarioType;
 
   @ApiPropertyOptional({
-    description: 'Arbitrary payload passed to the runner',
-    type: 'object',
-    additionalProperties: true,
+    description: 'Optional scenario run title',
+    example: 'Morning smoke run',
   })
   @IsOptional()
-  @IsObject()
-  payload?: Record<string, unknown>;
+  @IsString()
+  @MaxLength(80)
+  name?: string;
 }

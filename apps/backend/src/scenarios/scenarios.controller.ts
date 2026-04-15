@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { RunScenarioDto } from './dto/run-scenario.dto';
 import { ScenariosService } from './scenarios.service';
@@ -14,5 +14,13 @@ export class ScenariosController {
   })
   async run(@Body() body: RunScenarioDto) {
     return this.scenariosService.runScenario(body);
+  }
+
+  @Get('runs')
+  @ApiOkResponse({
+    description: 'Returns recent scenario runs (max 20)',
+  })
+  async getRecentRuns() {
+    return this.scenariosService.getRecentRuns();
   }
 }
