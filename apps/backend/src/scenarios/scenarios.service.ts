@@ -12,9 +12,52 @@ import { ObservabilityService } from '../telemetry/observability.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { RunScenarioDto, ScenarioType } from './dto/run-scenario.dto';
 
+type ScenarioRunStatus =
+  | 'completed'
+  | 'validation_error'
+  | 'system_error'
+  | 'teapot';
+
+type ScenarioLogLevel = 'log' | 'warn' | 'error';
+
+type ScenarioContext = {
+  type: ScenarioType;
+  startedAt: number;
+  metadata?: Prisma.InputJsonValue;
+  name?: string;
+};
+
+type PersistedScenarioRun = {
+  id: string;
+  status: string;
+  duration: number;
+  createdAt: string;
+};
+
+type ScenarioFailureParams = {
+  status: Exclude<ScenarioRunStatus, 'completed'>;
+  errorMessage: string;
+  logLevel: Extract<ScenarioLogLevel, 'warn' | 'error'>;
+};
+
 @Injectable()
 export class ScenariosService {
   private readonly logger = new Logger(ScenariosService.name);
+  private readonly scenarioHandlers: Record<
+    ScenarioType,
+    (context: ScenarioContext) => Promise<PersistedScenarioRun>
+  > = {
+    success: async (context) => this.handleSuccess(context),
+    slow_request: async (context) => this.handleSlowRequest(context),
+    validation_error: async (context) =>
+      this.handleFailure(context, {
+        status: 'validation_error',
+        errorMessage: 'Scenario input is invalid',
+        logLevel: 'warn',
+      }),
+    system_error: async (context) => this.handleSystemError(context),
+    teapot: async (context) => this.handleTeapot(context),
+  };
 
   constructor(
     private readonly prisma: PrismaService,
@@ -22,85 +65,13 @@ export class ScenariosService {
   ) {}
 
   async runScenario(input: RunScenarioDto) {
-    const startedAt = Date.now();
-    const metadata = input.name
-      ? ({ name: input.name } as Prisma.InputJsonValue)
-      : undefined;
-
-    switch (input.type) {
-      case 'success':
-        return this.completeScenario(input.type, startedAt, metadata);
-      case 'slow_request':
-        await this.sleep(this.randomInt(2000, 5000));
-        return this.completeScenario(input.type, startedAt, metadata, {
-          emitSlowWarning: true,
-        });
-      case 'validation_error':
-        Sentry.addBreadcrumb({
-          category: 'scenario',
-          level: 'warning',
-          message: 'validation_error scenario triggered',
-          data: {
-            scenarioType: input.type,
-            name: input.name ?? null,
-          },
-        });
-        await this.failScenario({
-          type: input.type,
-          startedAt,
-          status: 'validation_error',
-          errorMessage: 'Scenario input is invalid',
-          metadata,
-          logLevel: 'warn',
-        });
-        throw new BadRequestException('Scenario input is invalid');
-      case 'system_error':
-        this.captureSystemError({
-          type: input.type,
-          startedAt,
-          name: input.name,
-        });
-        await this.failScenario({
-          type: input.type,
-          startedAt,
-          status: 'system_error',
-          errorMessage: 'Synthetic system failure',
-          metadata,
-          logLevel: 'error',
-        });
-        throw new InternalServerErrorException('Synthetic system failure');
-      case 'teapot': {
-        const duration = this.getDurationMs(startedAt);
-        const scenarioRun = await this.prisma.scenarioRun.create({
-          data: {
-            type: input.type,
-            status: 'teapot',
-            duration,
-            metadata: {
-              ...(typeof metadata === 'object' && metadata ? metadata : {}),
-              easter: true,
-            } as Prisma.InputJsonValue,
-          },
-        });
-        this.observability.recordScenarioRun({
-          type: input.type,
-          status: 'teapot',
-          durationMs: duration,
-        });
-        this.logStructured('warn', 'teapot scenario returned 418', {
-          scenarioType: input.type,
-          scenarioId: scenarioRun.id,
-          duration,
-          error: null,
-        });
-        throw new HttpException(
-          { signal: 42, message: "I'm a teapot" },
-          HttpStatus.I_AM_A_TEAPOT,
-        );
-      }
-      default:
-        throw new BadRequestException('Unsupported scenario type');
+    const context = this.createScenarioContext(input);
+    const handler = this.scenarioHandlers[input.type];
+    if (!handler) {
+      throw new BadRequestException('Unsupported scenario type');
     }
+
+    return handler(context);
   }
 
   async getRecentRuns() {
@@ -119,44 +90,176 @@ export class ScenariosService {
     }));
   }
 
-  private async completeScenario(
-    type: ScenarioType,
-    startedAt: number,
+  private createScenarioContext(input: RunScenarioDto): ScenarioContext {
+    return {
+      type: input.type,
+      startedAt: Date.now(),
+      metadata: this.buildMetadata(input.name),
+      name: input.name,
+    };
+  }
+
+  private buildMetadata(name?: string): Prisma.InputJsonValue | undefined {
+    if (!name) {
+      return undefined;
+    }
+
+    return { name } as Prisma.InputJsonValue;
+  }
+
+  private async handleSuccess(
+    context: ScenarioContext,
+  ): Promise<PersistedScenarioRun> {
+    return this.persistScenarioRun({
+      context,
+      status: 'completed',
+      metricStatus: 'completed',
+      logLevel: 'log',
+      logMessage: 'scenario completed',
+      errorMessage: null,
+      metadata: context.metadata,
+    });
+  }
+
+  private async handleSlowRequest(
+    context: ScenarioContext,
+  ): Promise<PersistedScenarioRun> {
+    await this.sleep(this.randomInt(2000, 5000));
+    const result = await this.persistScenarioRun({
+      context,
+      status: 'completed',
+      metricStatus: 'completed',
+      logLevel: 'log',
+      logMessage: 'scenario completed',
+      errorMessage: null,
+      metadata: context.metadata,
+    });
+
+    this.logStructured(
+      'warn',
+      'slow request scenario exceeded expected latency',
+      {
+        scenarioType: context.type,
+        scenarioId: result.id,
+        duration: result.duration,
+        error: null,
+      },
+    );
+
+    return result;
+  }
+
+  private async handleFailure(
+    context: ScenarioContext,
+    params: ScenarioFailureParams,
+  ): Promise<never> {
+    this.addValidationBreadcrumbIfNeeded(context.type, context.name);
+    await this.persistScenarioRun({
+      context,
+      status: params.status,
+      metricStatus: params.status,
+      logLevel: params.logLevel,
+      logMessage: 'scenario failed',
+      errorMessage: params.errorMessage,
+      metadata: context.metadata,
+    });
+
+    if (params.status === 'validation_error') {
+      throw new BadRequestException(params.errorMessage);
+    }
+
+    throw new InternalServerErrorException(params.errorMessage);
+  }
+
+  private async handleSystemError(
+    context: ScenarioContext,
+  ): Promise<PersistedScenarioRun> {
+    this.captureSystemError({
+      type: context.type,
+      startedAt: context.startedAt,
+      name: context.name,
+    });
+
+    return this.handleFailure(context, {
+      status: 'system_error',
+      errorMessage: 'Synthetic system failure',
+      logLevel: 'error',
+    });
+  }
+
+  private async handleTeapot(
+    context: ScenarioContext,
+  ): Promise<PersistedScenarioRun> {
+    await this.persistScenarioRun({
+      context,
+      status: 'teapot',
+      metricStatus: 'teapot',
+      logLevel: 'warn',
+      logMessage: 'teapot scenario returned 418',
+      errorMessage: null,
+      metadata: this.buildTeapotMetadata(context.metadata),
+    });
+
+    throw new HttpException(
+      { signal: 42, message: "I'm a teapot" },
+      HttpStatus.I_AM_A_TEAPOT,
+    );
+  }
+
+  private buildTeapotMetadata(
     metadata?: Prisma.InputJsonValue,
-    options?: { emitSlowWarning?: boolean },
-  ) {
-    const duration = this.getDurationMs(startedAt);
+  ): Prisma.InputJsonValue {
+    return {
+      ...(typeof metadata === 'object' && metadata ? metadata : {}),
+      easter: true,
+    } as Prisma.InputJsonValue;
+  }
+
+  private addValidationBreadcrumbIfNeeded(type: ScenarioType, name?: string) {
+    if (type !== 'validation_error') {
+      return;
+    }
+    Sentry.addBreadcrumb({
+      category: 'scenario',
+      level: 'warning',
+      message: 'validation_error scenario triggered',
+      data: {
+        scenarioType: type,
+        name: name ?? null,
+      },
+    });
+  }
+
+  private async persistScenarioRun(params: {
+    context: ScenarioContext;
+    status: ScenarioRunStatus;
+    metricStatus: ScenarioRunStatus;
+    logLevel: ScenarioLogLevel;
+    logMessage: string;
+    errorMessage: string | null;
+    metadata?: Prisma.InputJsonValue;
+  }): Promise<PersistedScenarioRun> {
+    const duration = this.getDurationMs(params.context.startedAt);
     const scenarioRun = await this.prisma.scenarioRun.create({
       data: {
-        type,
-        status: 'completed',
+        type: params.context.type,
+        status: params.status,
         duration,
-        metadata,
+        error: params.errorMessage ?? undefined,
+        metadata: params.metadata,
       },
     });
 
     this.observability.recordScenarioRun({
-      type,
-      status: 'completed',
+      type: params.context.type,
+      status: params.metricStatus,
       durationMs: duration,
     });
-    if (options?.emitSlowWarning) {
-      this.logStructured(
-        'warn',
-        'slow request scenario exceeded expected latency',
-        {
-          scenarioType: type,
-          scenarioId: scenarioRun.id,
-          duration,
-          error: null,
-        },
-      );
-    }
-    this.logStructured('log', 'scenario completed', {
-      scenarioType: type,
+    this.logStructured(params.logLevel, params.logMessage, {
+      scenarioType: params.context.type,
       scenarioId: scenarioRun.id,
       duration,
-      error: null,
+      error: params.errorMessage,
     });
 
     return {
@@ -165,38 +268,6 @@ export class ScenariosService {
       duration,
       createdAt: scenarioRun.createdAt.toISOString(),
     };
-  }
-
-  private async failScenario(params: {
-    type: ScenarioType;
-    startedAt: number;
-    status: string;
-    errorMessage: string;
-    metadata?: Prisma.InputJsonValue;
-    logLevel: 'warn' | 'error';
-  }) {
-    const duration = this.getDurationMs(params.startedAt);
-    const scenarioRun = await this.prisma.scenarioRun.create({
-      data: {
-        type: params.type,
-        status: params.status,
-        duration,
-        error: params.errorMessage,
-        metadata: params.metadata,
-      },
-    });
-
-    this.observability.recordScenarioRun({
-      type: params.type,
-      status: 'error',
-      durationMs: duration,
-    });
-    this.logStructured(params.logLevel, 'scenario failed', {
-      scenarioType: params.type,
-      scenarioId: scenarioRun.id,
-      duration,
-      error: params.errorMessage,
-    });
   }
 
   private getDurationMs(startedAt: number) {
