@@ -13,11 +13,43 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { fetchHealth, runScenario } from "@/lib/api";
 
+const scenarioValues = [
+  "platform_foundation",
+  "observability_demo",
+  "cursor_ai_layer",
+] as const;
+
+type ScenarioType = (typeof scenarioValues)[number];
+
+const scenarioOptions: Array<{
+  value: ScenarioType;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: "platform_foundation",
+    label: "Platform Foundation (PRD 001)",
+    description: "Базовый каркас платформы и инфраструктуры",
+  },
+  {
+    value: "observability_demo",
+    label: "Observability Demo (PRD 002)",
+    description: "Демо сценария с метриками и трассировкой",
+  },
+  {
+    value: "cursor_ai_layer",
+    label: "Cursor AI Layer (PRD 003)",
+    description: "Сценарий работы AI-слоя в продукте",
+  },
+];
+
+const isScenarioType = (value: string): value is ScenarioType =>
+  (scenarioValues as readonly string[]).includes(value);
+
 const runScenarioSchema = z.object({
-  type: z.string().min(2, "Минимум 2 символа"),
+  type: z.string().refine(isScenarioType, "Выберите сценарий из списка"),
 });
 
 type RunScenarioFormData = z.infer<typeof runScenarioSchema>;
@@ -45,20 +77,20 @@ export default function Home() {
   } = useForm<RunScenarioFormData>({
     resolver: zodResolver(runScenarioSchema),
     defaultValues: {
-      type: "observability_demo",
+      type: "",
     },
   });
 
   const onSubmit = async (data: RunScenarioFormData) => {
     await runMutation.mutateAsync(data);
-    reset();
+    reset({ type: "" });
   };
 
   return (
     <div className="min-h-screen px-4 py-10">
       <main className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-        <nav className="flex items-center justify-between rounded-xl border border-zinc-200 bg-white px-4 py-3 shadow-sm">
-          <p className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
+        <nav className="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3 shadow-sm">
+          <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
             Signal Lab
           </p>
           <Button variant="outline" onClick={() => healthQuery.refetch()}>
@@ -80,7 +112,7 @@ export default function Home() {
                 ? "loading..."
                 : healthQuery.data?.status ?? "unavailable"}
             </p>
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-muted-foreground">
               {healthQuery.data?.timestamp
                 ? `Обновлено: ${new Date(healthQuery.data.timestamp).toLocaleString()}`
                 : "Timestamp недоступен"}
@@ -101,11 +133,30 @@ export default function Home() {
               className="space-y-3"
               onSubmit={handleSubmit(onSubmit)}
             >
-              <Input
-                placeholder="Тип сценария"
+              <label
+                className="block text-sm font-medium text-foreground"
+                htmlFor="scenario-type"
+              >
+                Сценарий запуска
+              </label>
+              <select
+                id="scenario-type"
+                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm text-foreground shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 aria-invalid={Boolean(errors.type)}
                 {...register("type")}
-              />
+              >
+                <option value="" disabled>
+                  Выберите сценарий из списка
+                </option>
+                {scenarioOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-muted-foreground">
+                {scenarioOptions.map((option) => option.description).join(" • ")}
+              </p>
               {errors.type ? (
                 <p className="text-sm text-red-600">{errors.type.message}</p>
               ) : null}
@@ -120,7 +171,7 @@ export default function Home() {
               {runMutation.isPending ? "Отправка..." : "Запустить"}
             </Button>
             {runMutation.data ? (
-              <p className="text-sm text-zinc-600">
+              <p className="text-sm text-muted-foreground">
                 Создан запуск: <span className="font-mono">{runMutation.data.id}</span>
               </p>
             ) : null}
