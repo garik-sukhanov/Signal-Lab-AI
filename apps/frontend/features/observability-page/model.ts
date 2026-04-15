@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { ScenarioRunHistoryItem } from "@/lib/api";
+import type { ScenarioRunHistoryItem } from "@/shared/lib/api";
 
 export const scenarioValues = [
   "success",

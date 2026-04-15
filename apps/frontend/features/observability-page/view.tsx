@@ -1,5 +1,5 @@
-import type { ScenarioRunHistoryItem, ScenarioRunResponse } from "@/lib/api";
-import { Button } from "@/components/ui/button";
+import type { ScenarioRunHistoryItem, ScenarioRunResponse } from "@/shared/lib/api";
+import { Button } from "@/shared/components/ui/button";
 import type { ToastState } from "./model";
 import {
   ApiHealthCard,
@@ -38,40 +38,26 @@ export function ObservabilityPageView({
   observabilityLinks,
 }: ObservabilityPageViewProps) {
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="w-full px-4 py-6">
       {toast ? <ToastBanner toast={toast} onDismiss={onDismissToast} /> : null}
 
-      <header className="w-full border-b border-border bg-card">
-        <div className="flex w-full items-center justify-between px-4 py-3">
-          <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            Signal Lab
-          </p>
-          <Button variant="outline" onClick={health.onRefresh}>
-            Обновить health
-          </Button>
-        </div>
-      </header>
+      <div className="mb-4 flex justify-end">
+        <Button variant="outline" onClick={health.onRefresh}>
+          Обновить health
+        </Button>
+      </div>
 
-      <main className="flex-1 w-full px-4 py-6">
-        <div className="grid w-full gap-6 lg:grid-cols-2 lg:items-stretch">
-          <section className="flex h-full flex-col gap-6">
-            <ScenarioRunCard scenarioForm={scenarioForm} runState={runState} />
-            <ObservabilityLinksCard links={observabilityLinks} />
-            <ApiHealthCard health={health} />
-          </section>
+      <div className="grid w-full gap-6 lg:grid-cols-2 lg:items-stretch">
+        <section className="flex h-full flex-col gap-6">
+          <ScenarioRunCard scenarioForm={scenarioForm} runState={runState} />
+          <ObservabilityLinksCard links={observabilityLinks} />
+          <ApiHealthCard health={health} />
+        </section>
 
-          <aside className="flex h-full flex-col gap-6">
-            <RunHistoryCard history={history} />
-          </aside>
-        </div>
-      </main>
-
-      <footer className="w-full border-t border-border bg-card">
-        <div className="flex w-full flex-wrap items-center justify-between gap-2 px-4 py-4 text-sm text-muted-foreground">
-          <span>All rights reserved © {new Date().getFullYear()}</span>
-          <span>tg @garik_sukhanov</span>
-        </div>
-      </footer>
+        <aside className="flex h-full flex-col gap-6">
+          <RunHistoryCard history={history} />
+        </aside>
+      </div>
     </div>
   );
 }

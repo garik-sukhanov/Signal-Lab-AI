@@ -1,7 +1,7 @@
 import type { FieldErrors, UseFormHandleSubmit, UseFormRegister } from "react-hook-form";
-import type { ScenarioRunHistoryItem, ScenarioRunResponse } from "@/lib/api";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import type { ScenarioRunHistoryItem, ScenarioRunResponse } from "@/shared/lib/api";
+import { Badge } from "@/shared/components/ui/badge";
+import { Button } from "@/shared/components/ui/button";
 import {
   Card,
   CardContent,
@@ -9,8 +9,8 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+} from "@/shared/components/ui/card";
+import { Input } from "@/shared/components/ui/input";
 import {
   getStatusVariant,
   type RunScenarioFormData,

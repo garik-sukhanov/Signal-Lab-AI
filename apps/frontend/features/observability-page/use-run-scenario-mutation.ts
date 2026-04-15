@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { runScenario, type ScenarioRunResponse } from "@/lib/api";
+import { runScenario, type ScenarioRunResponse } from "@/shared/lib/api";
 import { scenarioRunsQueryKey } from "./use-scenario-runs-query";
 
 interface UseRunScenarioMutationParams {

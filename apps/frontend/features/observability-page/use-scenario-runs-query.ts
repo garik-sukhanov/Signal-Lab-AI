@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchScenarioRuns } from "@/lib/api";
+import { fetchScenarioRuns } from "@/shared/lib/api";
 
 export const scenarioRunsQueryKey = ["scenario-runs"] as const;
 
