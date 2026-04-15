@@ -1,3 +1,5 @@
+import type { ScenarioType } from "./scenario-contracts";
+
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
@@ -7,7 +9,7 @@ export interface HealthResponse {
 }
 
 export interface ScenarioRunInput {
-  type: "success" | "validation_error" | "system_error" | "slow_request" | "teapot";
+  type: ScenarioType;
   name?: string;
 }
 

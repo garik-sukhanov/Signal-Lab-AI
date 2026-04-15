@@ -1,15 +1,7 @@
 import { z } from "zod";
 import type { ScenarioRunHistoryItem } from "@/shared/lib/api";
+import { scenarioValues, type ScenarioType } from "@/shared/lib/scenario-contracts";
 
-export const scenarioValues = [
-  "success",
-  "validation_error",
-  "system_error",
-  "slow_request",
-  "teapot",
-] as const;
-
-export type ScenarioType = (typeof scenarioValues)[number];
 export type StatusBadgeVariant = "success" | "warning" | "error" | "outline";
 export type ToastState = { variant: "success" | "error"; message: string } | null;
 

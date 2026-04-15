@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { getObservabilityLinksConfig } from "./config";
 import {
   defaultRunScenarioValues,
   normalizeOptionalText,
@@ -16,11 +17,6 @@ import { useScenarioRunsState } from "./use-scenario-runs-query";
 import { ObservabilityPageView } from "./view";
 
 const TOAST_TIMEOUT_MS = 4_000;
-const DEFAULT_OBSERVABILITY_LINKS = {
-  grafanaUrl: "http://localhost:3100",
-  sentryUrl: "https://sentry.io",
-  lokiQuery: '{app="signal-lab"}',
-};
 
 export function ObservabilityPageController() {
   const [toast, setToast] = useState<ToastState>(null);
@@ -62,15 +58,7 @@ export function ObservabilityPageController() {
     scenarioForm.reset(defaultRunScenarioValues);
   };
 
-  const observabilityLinks = {
-    grafanaUrl:
-      process.env.NEXT_PUBLIC_GRAFANA_URL ?? DEFAULT_OBSERVABILITY_LINKS.grafanaUrl,
-    sentryUrl:
-      process.env.NEXT_PUBLIC_SENTRY_URL ?? DEFAULT_OBSERVABILITY_LINKS.sentryUrl,
-    lokiExploreUrl: process.env.NEXT_PUBLIC_LOKI_EXPLORE_URL,
-    lokiQuery:
-      process.env.NEXT_PUBLIC_LOKI_QUERY ?? DEFAULT_OBSERVABILITY_LINKS.lokiQuery,
-  };
+  const observabilityLinks = getObservabilityLinksConfig();
 
   return (
     <ObservabilityPageView
