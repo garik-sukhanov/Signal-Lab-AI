@@ -28,13 +28,18 @@ export interface ScenarioFormViewModel {
 export function ApiHealthCard({
   health,
 }: {
-  health: { isLoading: boolean; status: string; timestamp?: string };
+  health: { isLoading: boolean; status: string; timestamp?: string; onRefresh: () => void };
 }) {
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Статус API</CardTitle>
-        <CardDescription>Проверка backend через TanStack Query</CardDescription>
+      <CardHeader className="flex-row items-start justify-between gap-4 space-y-0">
+        <div className="space-y-1">
+          <CardTitle>Статус API</CardTitle>
+          <CardDescription>Проверка backend через TanStack Query</CardDescription>
+        </div>
+        <Button variant="outline" onClick={health.onRefresh}>
+          Обновить health
+        </Button>
       </CardHeader>
       <CardContent className="space-y-2">
         <p className="text-sm">

@@ -1,5 +1,4 @@
 import type { ScenarioRunHistoryItem, ScenarioRunResponse } from "@/shared/lib/api";
-import { Button } from "@/shared/components/ui/button";
 import type { ToastState } from "./model";
 import {
   ApiHealthCard,
@@ -41,12 +40,6 @@ export function ObservabilityPageView({
     <div className="w-full px-4 py-6">
       {toast ? <ToastBanner toast={toast} onDismiss={onDismissToast} /> : null}
 
-      <div className="mb-4 flex justify-end">
-        <Button variant="outline" onClick={health.onRefresh}>
-          Обновить health
-        </Button>
-      </div>
-
       <div className="grid w-full gap-6 lg:grid-cols-2 lg:items-stretch">
         <section className="flex h-full flex-col gap-6">
           <ScenarioRunCard scenarioForm={scenarioForm} runState={runState} />
@@ -54,7 +47,7 @@ export function ObservabilityPageView({
           <ApiHealthCard health={health} />
         </section>
 
-        <aside className="flex h-full flex-col gap-6">
+        <aside className="flex h-full min-h-0 flex-col gap-6">
           <RunHistoryCard history={history} />
         </aside>
       </div>
