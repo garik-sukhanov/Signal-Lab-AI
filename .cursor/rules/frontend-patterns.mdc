@@ -1,0 +1,22 @@
+---
+description: Frontend data and UI patterns
+globs: apps/frontend/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Frontend Patterns
+
+## State management
+- Use TanStack Query for server state (fetching, caching, mutations).
+- Use React Hook Form for form state and submission handling.
+- Keep local UI state local; avoid introducing global store for simple flows.
+
+## UI composition
+- Build UI with shadcn/ui components and project primitives first.
+- Prefer composition and reusable sections over large monolithic page components.
+- Keep components focused on a single responsibility.
+
+## API interaction
+- Centralize API calls in `apps/frontend/lib/api.ts` or feature-level hooks.
+- Handle loading and error states explicitly in UI.
+- Keep request and response typing strict.

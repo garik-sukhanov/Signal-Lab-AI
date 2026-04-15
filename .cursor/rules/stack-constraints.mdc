@@ -1,0 +1,22 @@
+---
+description: Stack constraints for Signal Lab
+alwaysApply: true
+---
+
+# Stack Constraints
+
+## Approved stack
+- Frontend: Next.js App Router, React, TanStack Query, React Hook Form, shadcn/ui.
+- Backend: NestJS, Prisma ORM, PostgreSQL.
+- Observability: structured logs, metrics endpoint, Sentry.
+
+## Disallowed alternatives
+- Do not add Redux, MobX, or other global state managers for server state.
+- Do not add SWR, Apollo Client, or other alternatives to TanStack Query.
+- Do not add another ORM or query builder instead of Prisma.
+- Do not use raw SQL in app code except explicit migration files.
+
+## Dependency discipline
+- Prefer existing dependencies before adding new ones.
+- Any new dependency must include a brief rationale in the related change.
+- Keep implementation simple and aligned with KISS and single-responsibility design.

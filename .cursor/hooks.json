@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "hooks": {
+    "postToolUse": [
+      {
+        "command": "bash .cursor/hooks/post-write-prisma-reminder.sh"
+      },
+      {
+        "command": "bash .cursor/hooks/post-write-endpoint-obs-check.sh"
+      }
+    ]
+  }
+}

@@ -113,3 +113,14 @@ npm run prisma:migrate
 ```
 
 > Prisma команды из root автоматически подхватывают переменные из файла `.env`.
+
+## AI Layer (PRD 003)
+
+Для работы Cursor без ручного онбординга добавлен AI-слой проекта:
+
+- rules: `.cursor/rules/`
+- skills: `.cursor/skills/`
+- commands: `.cursor/commands/`
+- hooks: `.cursor/hooks.json` и `.cursor/hooks/`
+
+Подробная документация и чеклист приёмки: [docs/ai-layer.md](docs/ai-layer.md)
