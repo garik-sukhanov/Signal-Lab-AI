@@ -38,24 +38,40 @@ export function ObservabilityPageView({
   observabilityLinks,
 }: ObservabilityPageViewProps) {
   return (
-    <div className="min-h-screen px-4 py-10">
-      <main className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-        {toast ? <ToastBanner toast={toast} onDismiss={onDismissToast} /> : null}
+    <div className="flex min-h-screen flex-col">
+      {toast ? <ToastBanner toast={toast} onDismiss={onDismissToast} /> : null}
 
-        <nav className="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3 shadow-sm">
+      <header className="w-full border-b border-border bg-card">
+        <div className="flex w-full items-center justify-between px-4 py-3">
           <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
             Signal Lab
           </p>
           <Button variant="outline" onClick={health.onRefresh}>
             Обновить health
           </Button>
-        </nav>
+        </div>
+      </header>
 
-        <ApiHealthCard health={health} />
-        <ScenarioRunCard scenarioForm={scenarioForm} runState={runState} />
-        <RunHistoryCard history={history} />
-        <ObservabilityLinksCard links={observabilityLinks} />
+      <main className="flex-1 w-full px-4 py-6">
+        <div className="grid w-full gap-6 lg:grid-cols-2 lg:items-stretch">
+          <section className="flex h-full flex-col gap-6">
+            <ScenarioRunCard scenarioForm={scenarioForm} runState={runState} />
+            <ObservabilityLinksCard links={observabilityLinks} />
+            <ApiHealthCard health={health} />
+          </section>
+
+          <aside className="flex h-full flex-col gap-6">
+            <RunHistoryCard history={history} />
+          </aside>
+        </div>
       </main>
+
+      <footer className="w-full border-t border-border bg-card">
+        <div className="flex w-full flex-wrap items-center justify-between gap-2 px-4 py-4 text-sm text-muted-foreground">
+          <span>All rights reserved © {new Date().getFullYear()}</span>
+          <span>tg @garik_sukhanov</span>
+        </div>
+      </footer>
     </div>
   );
 }

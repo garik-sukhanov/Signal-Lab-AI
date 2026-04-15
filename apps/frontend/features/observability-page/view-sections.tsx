@@ -114,12 +114,12 @@ export function RunHistoryCard({
   history: { isLoading: boolean; isError: boolean; items: ScenarioRunHistoryItem[] | undefined };
 }) {
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader>
-        <CardTitle>История запусков</CardTitle>
+        <CardTitle>Журнал</CardTitle>
         <CardDescription>Последние 20 сценариев с автообновлением</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="h-full">
         {history.isLoading ? (
           <p className="text-sm text-muted-foreground">Загрузка истории...</p>
         ) : history.isError ? (
