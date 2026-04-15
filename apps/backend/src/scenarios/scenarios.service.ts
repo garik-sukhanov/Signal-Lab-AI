@@ -6,6 +6,7 @@ import {
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
+import * as Sentry from '@sentry/nestjs';
 import { Prisma } from '@prisma/client';
 import { ObservabilityService } from '../telemetry/observability.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -31,23 +32,41 @@ export class ScenariosService {
         return this.completeScenario(input.type, startedAt, metadata);
       case 'slow_request':
         await this.sleep(this.randomInt(2000, 5000));
-        return this.completeScenario(input.type, startedAt, metadata);
+        return this.completeScenario(input.type, startedAt, metadata, {
+          emitSlowWarning: true,
+        });
       case 'validation_error':
+        Sentry.addBreadcrumb({
+          category: 'scenario',
+          level: 'warning',
+          message: 'validation_error scenario triggered',
+          data: {
+            scenarioType: input.type,
+            name: input.name ?? null,
+          },
+        });
         await this.failScenario({
           type: input.type,
           startedAt,
           status: 'validation_error',
           errorMessage: 'Scenario input is invalid',
           metadata,
+          logLevel: 'warn',
         });
         throw new BadRequestException('Scenario input is invalid');
       case 'system_error':
+        this.captureSystemError({
+          type: input.type,
+          startedAt,
+          name: input.name,
+        });
         await this.failScenario({
           type: input.type,
           startedAt,
           status: 'system_error',
           errorMessage: 'Synthetic system failure',
           metadata,
+          logLevel: 'error',
         });
         throw new InternalServerErrorException('Synthetic system failure');
       case 'teapot': {
@@ -104,6 +123,7 @@ export class ScenariosService {
     type: ScenarioType,
     startedAt: number,
     metadata?: Prisma.InputJsonValue,
+    options?: { emitSlowWarning?: boolean },
   ) {
     const duration = this.getDurationMs(startedAt);
     const scenarioRun = await this.prisma.scenarioRun.create({
@@ -120,6 +140,18 @@ export class ScenariosService {
       status: 'completed',
       durationMs: duration,
     });
+    if (options?.emitSlowWarning) {
+      this.logStructured(
+        'warn',
+        'slow request scenario exceeded expected latency',
+        {
+          scenarioType: type,
+          scenarioId: scenarioRun.id,
+          duration,
+          error: null,
+        },
+      );
+    }
     this.logStructured('log', 'scenario completed', {
       scenarioType: type,
       scenarioId: scenarioRun.id,
@@ -141,6 +173,7 @@ export class ScenariosService {
     status: string;
     errorMessage: string;
     metadata?: Prisma.InputJsonValue;
+    logLevel: 'warn' | 'error';
   }) {
     const duration = this.getDurationMs(params.startedAt);
     const scenarioRun = await this.prisma.scenarioRun.create({
@@ -158,7 +191,7 @@ export class ScenariosService {
       status: 'error',
       durationMs: duration,
     });
-    this.logStructured('warn', 'scenario failed', {
+    this.logStructured(params.logLevel, 'scenario failed', {
       scenarioType: params.type,
       scenarioId: scenarioRun.id,
       duration,
@@ -178,6 +211,26 @@ export class ScenariosService {
     return new Promise((resolve) => {
       setTimeout(resolve, ms);
     });
+  }
+
+  private captureSystemError(params: {
+    type: ScenarioType;
+    startedAt: number;
+    name?: string;
+  }) {
+    const error = new Error('Synthetic system failure');
+    Sentry.withScope(
+      (scope: {
+        setTag: (key: string, value: string) => void;
+        setExtra: (key: string, value: unknown) => void;
+      }) => {
+        scope.setTag('scenario.type', params.type);
+        scope.setTag('scenario.synthetic', 'true');
+        scope.setExtra('scenario.name', params.name ?? null);
+        scope.setExtra('scenario.startedAt', params.startedAt);
+        Sentry.captureException(error);
+      },
+    );
   }
 
   private logStructured(

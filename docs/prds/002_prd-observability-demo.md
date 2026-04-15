@@ -109,6 +109,20 @@ services:
 
 Всё должно работать после `docker compose up -d`.
 
+## Статус реализации (2026-04-15)
+
+| Шаг | Статус | Подтверждение |
+|-----|--------|---------------|
+| F1 | ✅ Готово | Форма RHF, mutation, loading и toast-сообщения реализованы во frontend. |
+| F2 | ✅ Готово | История последних 20 запусков, auto-refresh и badge-статусы работают. |
+| F3 | ✅ Готово | Observability links вынесены в `NEXT_PUBLIC_*` env и отображаются в UI. |
+| F4 | ✅ Готово | Все сценарии (`success`, `validation_error`, `system_error`, `slow_request`, `teapot`) обрабатываются и сохраняются в БД. |
+| F5 | ✅ Готово | `/metrics` отдаёт требуемые метрики в Prometheus формате. |
+| F6 | ✅ Готово | JSON-логи с обязательным контекстом пишутся; `slow_request` и `system_error` имеют корректные уровни сигналов. |
+| F7 | ✅ Готово* | Sentry SDK подключён, `system_error` отправляет capture, `validation_error` добавляет breadcrumb. Для фактической отправки нужен `SENTRY_DSN`. |
+| F8 | ✅ Готово | Provisioned Grafana dashboard (3 обязательные панели + Loki logs panel). |
+| F9 | ✅ Готово | Compose расширен сервисами `prometheus`, `grafana`, `loki`, `promtail`; стек поднимается через `docker compose up -d`. |
+
 ## Verification Walkthrough
 
 Интервьюер должен за 5 минут пройти этот путь:
@@ -124,10 +138,10 @@ services:
 
 ## Критерии приёмки
 
-- [ ] 4 типа сценариев работают из UI.
-- [ ] Каждый run сохраняется в PostgreSQL.
-- [ ] `GET /metrics` возвращает Prometheus-формат.
-- [ ] Grafana dashboard имеет минимум 3 полезных панели.
-- [ ] Логи доступны в Loki и фильтруемы по scenarioType.
-- [ ] `system_error` виден в Sentry.
-- [ ] Verification walkthrough проходится без чтения исходников.
+- [x] 4 типа сценариев работают из UI.
+- [x] Каждый run сохраняется в PostgreSQL.
+- [x] `GET /metrics` возвращает Prometheus-формат.
+- [x] Grafana dashboard имеет минимум 3 полезных панели.
+- [x] Логи доступны в Loki и фильтруемы по scenarioType.
+- [x] `system_error` виден в Sentry (при заданном `SENTRY_DSN`).
+- [x] Verification walkthrough проходится без чтения исходников.

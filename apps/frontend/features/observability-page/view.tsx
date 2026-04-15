@@ -11,6 +11,7 @@ import {
 
 interface ObservabilityPageViewProps {
   toast: ToastState;
+  onDismissToast: () => void;
   health: { isLoading: boolean; status: string; timestamp?: string; onRefresh: () => void };
   scenarioForm: ScenarioFormViewModel;
   runState: { isPending: boolean; latestRun: ScenarioRunResponse | undefined };
@@ -19,19 +20,27 @@ interface ObservabilityPageViewProps {
     isError: boolean;
     items: ScenarioRunHistoryItem[] | undefined;
   };
+  observabilityLinks: {
+    grafanaUrl: string;
+    sentryUrl: string;
+    lokiExploreUrl?: string;
+    lokiQuery: string;
+  };
 }
 
 export function ObservabilityPageView({
   toast,
+  onDismissToast,
   health,
   scenarioForm,
   runState,
   history,
+  observabilityLinks,
 }: ObservabilityPageViewProps) {
   return (
     <div className="min-h-screen px-4 py-10">
       <main className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-        {toast ? <ToastBanner toast={toast} /> : null}
+        {toast ? <ToastBanner toast={toast} onDismiss={onDismissToast} /> : null}
 
         <nav className="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3 shadow-sm">
           <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
@@ -45,23 +54,44 @@ export function ObservabilityPageView({
         <ApiHealthCard health={health} />
         <ScenarioRunCard scenarioForm={scenarioForm} runState={runState} />
         <RunHistoryCard history={history} />
-        <ObservabilityLinksCard />
+        <ObservabilityLinksCard links={observabilityLinks} />
       </main>
     </div>
   );
 }
 
-function ToastBanner({ toast }: { toast: NonNullable<ToastState> }) {
+function ToastBanner({
+  toast,
+  onDismiss,
+}: {
+  toast: NonNullable<ToastState>;
+  onDismiss: () => void;
+}) {
+  const isSuccess = toast.variant === "success";
+
   return (
     <div
-      className={`fixed right-4 top-4 z-50 rounded-md border px-4 py-3 text-sm shadow-lg ${
-        toast.variant === "success"
-          ? "border-emerald-300 bg-emerald-50 text-emerald-900"
-          : "border-rose-300 bg-rose-50 text-rose-900"
+      className={`fixed right-4 top-4 z-50 flex min-w-72 max-w-sm items-start justify-between gap-3 rounded-lg border px-4 py-3 shadow-lg ${
+        isSuccess
+          ? "border-emerald-300 bg-emerald-50 text-emerald-950"
+          : "border-rose-300 bg-rose-50 text-rose-950"
       }`}
-      role="status"
+      role="alert"
+      aria-live="polite"
     >
-      {toast.message}
+      <div className="space-y-1">
+        <p className="text-xs font-semibold uppercase tracking-wide">
+          {isSuccess ? "Успех" : "Ошибка"}
+        </p>
+        <p className="text-sm">{toast.message}</p>
+      </div>
+      <button
+        type="button"
+        className="text-xs font-medium underline underline-offset-4"
+        onClick={onDismiss}
+      >
+        Закрыть
+      </button>
     </div>
   );
 }

@@ -149,7 +149,14 @@ export function RunHistoryCard({
   );
 }
 
-export function ObservabilityLinksCard() {
+interface ObservabilityLinks {
+  grafanaUrl: string;
+  sentryUrl: string;
+  lokiExploreUrl?: string;
+  lokiQuery: string;
+}
+
+export function ObservabilityLinksCard({ links }: { links: ObservabilityLinks }) {
   return (
     <Card>
       <CardHeader>
@@ -159,13 +166,26 @@ export function ObservabilityLinksCard() {
       <CardContent className="space-y-2 text-sm text-muted-foreground">
         <p>
           Grafana Dashboard:{" "}
-          <a className="underline" href="http://localhost:3100" rel="noreferrer" target="_blank">
-            http://localhost:3100
+          <a className="underline" href={links.grafanaUrl} rel="noreferrer" target="_blank">
+            {links.grafanaUrl}
           </a>
         </p>
-        <p>Sentry: check project dashboard</p>
         <p>
-          Loki query: <span className="font-mono">{"{app=\"signal-lab\"}"}</span>
+          Sentry:{" "}
+          <a className="underline" href={links.sentryUrl} rel="noreferrer" target="_blank">
+            {links.sentryUrl}
+          </a>
+        </p>
+        {links.lokiExploreUrl ? (
+          <p>
+            Loki Explore:{" "}
+            <a className="underline" href={links.lokiExploreUrl} rel="noreferrer" target="_blank">
+              {links.lokiExploreUrl}
+            </a>
+          </p>
+        ) : null}
+        <p>
+          Loki query: <span className="font-mono">{links.lokiQuery}</span>
         </p>
       </CardContent>
     </Card>
