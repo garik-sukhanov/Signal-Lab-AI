@@ -58,6 +58,34 @@ curl localhost:3001/api/health
 - Swagger: [http://localhost:3001/api/docs](http://localhost:3001/api/docs)
 - PostgreSQL: `localhost:5433`
 
+## Подключение Sentry
+
+1. Создайте проект в Sentry (Node / NestJS) и скопируйте DSN.
+2. В `.env` заполните:
+
+```bash
+SENTRY_DSN=https://<public_key>@o<org_id>.ingest.sentry.io/<project_id>
+SENTRY_ENVIRONMENT=local
+SENTRY_RELEASE=signal-lab@dev
+SENTRY_TRACES_SAMPLE_RATE=0
+```
+
+3. Перезапустите backend:
+
+```bash
+docker compose up -d --build backend
+```
+
+4. Проверьте отправку события:
+
+```bash
+curl -X POST http://localhost:3001/api/scenarios/run \
+  -H "Content-Type: application/json" \
+  -d '{"type":"system_error"}'
+```
+
+После этого в Sentry должен появиться exception `Synthetic system failure`.
+
 ## Остановка окружения
 
 ```bash
