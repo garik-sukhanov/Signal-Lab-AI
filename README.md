@@ -31,6 +31,8 @@ signal-lab/
 cp .env.example .env
 ```
 
+> По умолчанию проект использует `POSTGRES_PORT=5433`, чтобы не конфликтовать с локальным Postgres на `5432`.
+
 2. Поднять все сервисы:
 
 ```bash
@@ -54,7 +56,7 @@ curl localhost:3001/api/health
 - Frontend: [http://localhost:3000](http://localhost:3000)
 - Backend API: [http://localhost:3001](http://localhost:3001)
 - Swagger: [http://localhost:3001/api/docs](http://localhost:3001/api/docs)
-- PostgreSQL: `localhost:5432`
+- PostgreSQL: `localhost:5433`
 
 ## Остановка окружения
 
@@ -81,3 +83,5 @@ npm run backend:dev
 npm run prisma:generate
 npm run prisma:migrate
 ```
+
+> Prisma команды из root автоматически подхватывают переменные из файла `.env`.

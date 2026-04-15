@@ -10,8 +10,8 @@
     "backend:build": "npm run build --prefix apps/backend",
     "frontend:lint": "npm run lint --prefix apps/frontend",
     "backend:lint": "npm run lint --prefix apps/backend",
-    "prisma:generate": "npm run prisma:generate --prefix apps/backend",
-    "prisma:migrate": "npm run prisma:migrate --prefix apps/backend"
+    "prisma:generate": "sh -ac 'set -a; [ -f .env ] && . ./.env; set +a; npm run prisma:generate --prefix apps/backend'",
+    "prisma:migrate": "sh -ac 'set -a; [ -f .env ] && . ./.env; set +a; npm run prisma:migrate --prefix apps/backend'"
   },
   "devDependencies": {
     "prisma": "^6.19.3"
