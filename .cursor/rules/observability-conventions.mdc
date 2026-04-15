@@ -1,0 +1,26 @@
+---
+description: Observability conventions for backend and frontend changes
+alwaysApply: true
+---
+
+# Observability Conventions
+
+## When observability is required
+- Any new backend endpoint must include structured logging and a metric update.
+- Any handled backend exception must be logged with context and rethrown as HTTP-safe error.
+- Sentry should be used for unexpected or system-level failures, not for expected validation errors.
+
+## Metrics naming
+- Use `snake_case` metric names with stable domain prefix, for example `scenario_runs_total`.
+- Use labels with low cardinality only (`route`, `status`, `scenario_type`).
+- Never include user identifiers or free-form text in metric labels.
+
+## Logging format
+- Use structured logs with message + context object.
+- Include route and operation identifiers where possible.
+- Do not log secrets, DSN values, tokens, or raw credentials.
+
+## Sentry conventions
+- Capture unexpected exceptions once at boundary level.
+- Add tags for domain and endpoint for searchability.
+- Avoid duplicate capture in nested layers.

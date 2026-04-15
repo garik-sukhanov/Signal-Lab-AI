@@ -1,0 +1,22 @@
+---
+description: Cross-layer error handling rules for Signal Lab
+alwaysApply: true
+---
+
+# Error Handling
+
+## Backend
+- Validate input through DTO + validation pipe before business logic.
+- Throw typed NestJS HTTP exceptions for expected domain failures.
+- Let global exception filter format final HTTP response consistently.
+- Do not swallow errors in `catch`; log context and rethrow.
+
+## Frontend
+- Handle request errors through TanStack Query error channels.
+- Show user-friendly messages; avoid exposing raw stack traces.
+- Keep fallback UI deterministic for loading, empty, and error states.
+
+## Shared principles
+- Expected errors: clear message, proper status, no Sentry noise.
+- Unexpected errors: log with context and send to Sentry once.
+- Never leak secrets in error messages or logs.

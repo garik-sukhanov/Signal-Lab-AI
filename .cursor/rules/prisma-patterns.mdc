@@ -1,0 +1,22 @@
+---
+description: Prisma usage patterns and constraints
+globs: apps/backend/**/*.ts
+alwaysApply: false
+---
+
+# Prisma Patterns
+
+## Required patterns
+- Access database through `PrismaService` injected by NestJS DI.
+- Keep data access in service layer; controllers should stay thin.
+- Use Prisma model types and DTO mapping instead of loose object shapes.
+
+## Forbidden patterns
+- Do not use raw SQL (`$queryRaw`, `$executeRaw`) unless explicitly required and justified.
+- Do not introduce any other ORM in backend modules.
+- Do not perform database writes directly in controllers.
+
+## Schema and migration workflow
+- Any schema change must be followed by migration and Prisma client generation.
+- Keep schema changes minimal and backward compatible when possible.
+- Document non-trivial migration impact in PR notes.
