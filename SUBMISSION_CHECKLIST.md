@@ -132,7 +132,7 @@ docker compose down
 - [x] UI приложения (`screenshots/app_ui.png`)
 - [x] Grafana dashboard с данными (`screenshots/grafana.png`)
 - [x] Loki logs (`screenshots/loki.png`)
-- [ ] Sentry error (нужен отдельный скрин из Sentry-проекта)
+- [x] Sentry error (`screenshots/sentry.png`)
 
 (Приложи файлы или ссылки ниже)
 
